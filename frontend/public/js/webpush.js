@@ -4,9 +4,10 @@ let convertedVapidKey, subscription;
     try {
 
         const registration = await navigator.serviceWorker.register('/serviceworker.js', { scope: '/' });
-        const res = await fetch('/key');
+        const res = await fetch('http://localhost:3000/pubkey', {mode: 'cors'});
         const vapidPublicKey = await res.text();
 
+        console.log(vapidPublicKey);
         convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
         
         // プッシュサーバにアプリケーションサーバの公開鍵を登録する、エンドポイントとブラウザの公開鍵とソルトを取得する。
@@ -19,6 +20,17 @@ let convertedVapidKey, subscription;
         Notification.requestPermission(permission => {
             console.log(permission); // 'default', 'granted', 'denied'
         });
+
+        if (!subscription) return console.log('sbuscription is null');
+        await fetch('http://localhost:3000/subscription', {
+            method: 'POST',
+            body: JSON.stringify(subscription),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            mode: 'cors',
+        });
+
     } catch (err) {
         console.log(err);
     }
