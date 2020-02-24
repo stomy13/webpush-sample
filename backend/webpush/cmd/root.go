@@ -1,14 +1,12 @@
 package cmd
 
 import (
-	"encoding/json"
 	"log"
 	"os"
 
 	"github.com/MasatoTokuse/webpush/webpush/dbaccess"
+	"github.com/MasatoTokuse/webpush/webpush/message"
 	"github.com/MasatoTokuse/webpush/webpush/server"
-	"github.com/MasatoTokuse/webpush/webpush/setting"
-	webpush "github.com/SherClockHolmes/webpush-go"
 	"github.com/natefinch/lumberjack"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -32,14 +30,16 @@ func NewCmdRoot() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			var err error
 			_ = err
-			err = push()
+			conargs := getConnectArgs()
+			message := message.NewMessage("title from golang", "bodyyyy from golang")
+			err = message.Push(conargs)
 		},
 	}
 
 	flags := cmd.PersistentFlags()
 	flags.StringVar(&port, "port", ":3000", "Listen port")
 	flags.StringVar(&dbServer, "db_server", "localhost", "db server")
-	flags.StringVar(&dbPort, "db_port", "3306", "db port")
+	flags.StringVar(&dbPort, "db_port", "33306", "db port")
 	flags.StringVar(&dbSchema, "db_schema", "webpush", "db schema")
 	flags.StringVar(&dbLogin, "db_login", "webpush", "db login")
 	flags.StringVar(&dbPassword, "db_password", "webpush", "db password")
@@ -110,8 +110,8 @@ func Execute() {
 	}
 }
 
-func getConnectArgs() *server.ConnectArgs {
-	var conarg server.ConnectArgs
+func getConnectArgs() *dbaccess.ConnectArgs {
+	var conarg dbaccess.ConnectArgs
 
 	conarg.Address = dbServer
 	conarg.Port = dbPort
@@ -120,43 +120,4 @@ func getConnectArgs() *server.ConnectArgs {
 	conarg.Password = dbPassword
 
 	return &conarg
-}
-
-type message struct {
-	Title string `json:"title"`
-	Body  string `json:"body"`
-}
-
-func push() error {
-	// server keypair
-	keypair, err := setting.GetKeypair()
-	if err != nil {
-		return err
-	}
-
-	// Select subscription
-	db := dbaccess.ConnectGorm()
-	defer db.Close()
-
-	var s dbaccess.Subscription
-	db.Where("user_id = ?", 50).Last(&s)
-
-	// Decode subscription
-	sub := &webpush.Subscription{Endpoint: s.Endpoint, Keys: webpush.Keys{P256dh: s.P256dh, Auth: s.Auth}}
-
-	messageJSON, _ := json.MarshalIndent(message{Title: "title from golang", Body: "body grom glang"}, "", "  ")
-
-	// Send Notification
-	resp, err := webpush.SendNotification(messageJSON, sub, &webpush.Options{
-		Subscriber:      "example@example.com",
-		VAPIDPublicKey:  keypair.PublicKey,
-		VAPIDPrivateKey: keypair.PrivateKey,
-		TTL:             30,
-	})
-	if err != nil {
-		log.Println(err)
-	}
-	defer resp.Body.Close()
-
-	return err
 }

@@ -1,11 +1,7 @@
 package dbaccess
 
 import (
-	"fmt"
-	"log"
-
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 type Subscription struct {
@@ -15,33 +11,3 @@ type Subscription struct {
 	P256dh   string `gorm:"size:255"`
 	Auth     string `gorm:"size:255"`
 }
-
-func ConnectGorm() *gorm.DB {
-	connectTemplate := "%s:%s@%s/%s?parseTime=true"
-	connect := fmt.Sprintf(connectTemplate, DBUser, DBPass, DBProtocol, DBName)
-	log.Println(connect)
-	db, err := gorm.Open(Dialect, connect)
-
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
-
-	return db
-}
-
-const (
-	// データベース
-	Dialect = "mysql"
-
-	// ユーザー名
-	DBUser = "webpush"
-
-	// パスワード
-	DBPass = "webpush"
-
-	// プロトコル
-	DBProtocol = "tcp(localhost:33306)"
-
-	// DB名
-	DBName = "webpush"
-)
