@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/MasatoTokuse/webpush/webpush/dbaccess"
-	myjson "github.com/MasatoTokuse/webpush/webpush/json"
+	webpush "github.com/SherClockHolmes/webpush-go"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 )
@@ -48,6 +48,7 @@ func (*server) RunServer(port string, conargs *ConnectArgs) error {
 
 	// response public key
 	r.Get("/pubkey", func(w http.ResponseWriter, r *http.Request) {
+		// TODO:Import File
 		w.Write([]byte("BO-UY2C7nObUfD6MYDfw5ecSpIuf8REJsu9gISnsCCtdvC6u-FpHkC_HNjjZmjvnn1HzOiGaLJy-tzPfY6M_6ns"))
 	})
 
@@ -61,25 +62,20 @@ func (*server) RunServer(port string, conargs *ConnectArgs) error {
 		}
 		log.Println(string(body))
 
-		var jep myjson.Endpoint
-		json.Unmarshal(body, &jep)
-		// log.Println("-----------unmarshal--------------")
-		// log.Println(jep.Endpoint)
-		// log.Println(jep.Keys.Key)
-		// log.Println(jep.Keys.Token)
+		var js webpush.Subscription
+		json.Unmarshal(body, &js)
 
-		var ep dbaccess.Endpoint
-		ep.Endpoint = jep.Endpoint
-		ep.Key = jep.Keys.Key
-		ep.Token = jep.Keys.Token
-		ep.UserID = 50
+		var sub dbaccess.Subscription
+		sub.Endpoint = js.Endpoint
+		sub.P256dh = js.Keys.P256dh
+		sub.Auth = js.Keys.Auth
+		sub.UserID = 50
 
-		// TODO:DBに保存
 		db := dbaccess.ConnectGorm()
 		defer db.Close()
-		db.Set("gorm:table_options", "ENGINE = InnoDB").AutoMigrate(&dbaccess.Endpoint{})
-		db.NewRecord(ep)
-		db.Create(&ep)
+		db.Set("gorm:table_options", "ENGINE = InnoDB").AutoMigrate(&dbaccess.Subscription{})
+		db.NewRecord(sub)
+		db.Create(&sub)
 
 		w.Write([]byte("ok"))
 	})

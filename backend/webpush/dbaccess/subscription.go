@@ -8,23 +8,16 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
-// type conn struct {
-// 	db *gorm.DB
-// }
-
-// func (c conn) Insert(model interface{}) {
-// }
-
-type Endpoint struct {
+type Subscription struct {
 	gorm.Model
 	UserID   int    `gorm:"size:11"`
 	Endpoint string `gorm:"size:2048"`
-	Key      string `gorm:"size:255"`
-	Token    string `gorm:"size:255"`
+	P256dh   string `gorm:"size:255"`
+	Auth     string `gorm:"size:255"`
 }
 
 func ConnectGorm() *gorm.DB {
-	connectTemplate := "%s:%s@%s/%s"
+	connectTemplate := "%s:%s@%s/%s?parseTime=true"
 	connect := fmt.Sprintf(connectTemplate, DBUser, DBPass, DBProtocol, DBName)
 	log.Println(connect)
 	db, err := gorm.Open(Dialect, connect)
